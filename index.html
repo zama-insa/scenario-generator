@@ -1,12 +1,74 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello World!</title>
+    <title>ScenGen</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.2.2/svg.js"></script>
+   <!-- Try to load from cdn to exclude path issues. -->
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="node_modules/jquery/dist/jquery.min.js"></script>
+  <style>
+    #drawing:active {
+      cursor: pointer;
+    }
+  </style>
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chrome <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+  <div id="drawing"></div>
+  <div id="output">
+    <label for="X">X</label><span id="X"></span> 
+    <label for="Y">Y</label><span id="Y"></span><br/>
+    <label for="rX">Rectangle X</label><span id="rX"></span> 
+    <label for="rY">Y</label><span id="rY"></span> 
+    <label for="rW">Width</label><span id="rW"></span> 
+    <label for="rH">Height</label><span id="rH"></span> 
+  </div>
+    <script>
+    window.jQuery = window.$ = jQuery;
+    $(document).ready(function() {
+      function update(X,Y) {
+      $("#X").text(X);
+      $("#Y").text(Y);
+      $("#rX").text(rect.attr('x'));
+      $("#rY").text(rect.attr('y'));
+      $("#rW").text(rect.width());
+      $("#rH").text(rect.height());
+    }
+      var draw = SVG('drawing').size(800,500)
+      var border = draw.rect(800,500).stroke({width: 1}).opacity(0.1);
+      var mainLine = draw.line(50,200,750,200).stroke({width:3})
+      var isDragging = false;
+      var mouseDown = false;
+      var oldX, oldY;
+      var rect;
+      $("#drawing")
+      .mousedown(function(event) {
+        isDragging = false;
+        mouseDown = true;
+      })
+      .mousemove(function(event) {
+        if (mouseDown) {
+          if (!isDragging) {
+            isDragging = true;
+            if (rect) rect.remove();
+            rect = draw.rect(20,20).attr('x', event.pageX).attr('y', event.pageY);
+            oldX = event.pageX;
+            oldY = event.pageY;
+          } else {
+            //rect.animate().move(event.pageX, event.pageY);
+            rect.size(Math.abs(event.pageX - oldX), Math.abs(event.pageY - oldY))
+            update(event.pageX, event.pageY);
+          }
+        }
+      })
+      .mouseup(function() {
+        mouseDown = false;
+        var wasDragging = isDragging;
+        isDragging = false;
+        if (!wasDragging) {
+
+        }
+      });
+    });
+    </script>
   </body>
 </html>
