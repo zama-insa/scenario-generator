@@ -10,6 +10,22 @@
     #drawing:active {
       cursor: pointer;
     }
+    text:focus, tspan:focus {
+      outline: none;
+    }
+    text, tspan {
+      -webkit-user-select: none; /* Chrome/Safari */        
+      -moz-user-select: none; /* Firefox */
+      -ms-user-select: none; /* IE10+ */
+
+      /* Rules below not implemented in browsers yet */
+      -o-user-select: none;
+      user-select: none;
+    }
+    rect.selected {
+      stroke-width: 2;
+      stroke: rgb(24, 27, 8);
+    }
   </style>
   </head>
   <body>
@@ -20,26 +36,33 @@
     <label for="rX">Rectangle X</label><span id="rX"></span> 
     <label for="rY">Y</label><span id="rY"></span> 
     <label for="rW">Width</label><span id="rW"></span> 
-    <label for="rH">Height</label><span id="rH"></span> 
+    <label for="rH">Height</label><span id="rH"></span> <br/>
+    <label for="CK">Clicking on </label><span id="CK"></span>
   </div>
     <script>
-    window.jQuery = window.$ = jQuery;
+    function randInt (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
     $(document).ready(function() {
       function update(X,Y) {
       $("#X").text(X);
       $("#Y").text(Y);
-      $("#rX").text(rect.attr('x'));
-      $("#rY").text(rect.attr('y'));
-      $("#rW").text(rect.width());
-      $("#rH").text(rect.height());
+      $("#rX").text(rects[rects.length-1].attr('x'));
+      $("#rY").text(rects[rects.length-1].attr('y'));
+      $("#rW").text(rects[rects.length-1].width());
+      $("#rH").text(rects[rects.length-1].height());
+      $("#CK").text(current_click);
     }
-      var draw = SVG('drawing').size(800,500)
+      var draw = SVG('drawing').size(800,500);
       var border = draw.rect(800,500).stroke({width: 1}).opacity(0.1);
-      var mainLine = draw.line(50,200,750,200).stroke({width:3})
+      var mainLine = draw.line(50,200,750,200).stroke({width:3});
       var isDragging = false;
       var mouseDown = false;
       var oldX, oldY;
-      var rect;
+      var rects = [];
+      var groups = [];
+      var selected = [];
+      var current_click;
       $("#drawing")
       .mousedown(function(event) {
         isDragging = false;
@@ -49,25 +72,62 @@
         if (mouseDown) {
           if (!isDragging) {
             isDragging = true;
-            if (rect) rect.remove();
-            rect = draw.rect(20,20).attr('x', event.pageX).attr('y', event.pageY);
+            var group = draw.group();
+            var rect = group.rect(20,20).attr('x', event.pageX).attr('y', event.pageY)
+            .fill({ color: '#' +randInt(200000,500000)/*new SVG.Color({r: Math.random(0,255), g:Math.random(0,255), b: Math.random(0,255)})*/, opacity: 0.7 });
+            rects.push(rect);
+            groups.push(group);
+            selected.push(false);
             oldX = event.pageX;
             oldY = event.pageY;
           } else {
             //rect.animate().move(event.pageX, event.pageY);
-            rect.size(Math.abs(event.pageX - oldX), Math.abs(event.pageY - oldY))
+            rects[rects.length-1].size(Math.abs(event.pageX - oldX), Math.abs(event.pageY - oldY));
             update(event.pageX, event.pageY);
           }
         }
       })
-      .mouseup(function() {
+      .mouseup(function(event) {
         mouseDown = false;
         var wasDragging = isDragging;
         isDragging = false;
-        if (!wasDragging) {
-
-        }
-      });
+        if (wasDragging) {
+          // Create label
+          
+          var text = groups[rects.length-1].text('R' + (rects.length-1));
+          text.x(rects[rects.length-1].attr('x'));
+          text.y(rects[rects.length-1].attr('y'));
+          text.fill({color : rects[rects.length-1].color()})
+          console.log(text);
+        } else {
+          console.log("Clicking");
+          var found = false;
+          var i;
+          for (i = rects.length-1; i >=0; i--) {
+            var rx = rects[i].attr('x');
+            var ry = rects[i].attr('y');
+            var w = rects[i].width();
+            var h = rects[i].height();
+            var x = event.pageX;
+            var y = event.pageY;
+            if(x < rx || x > rx + w || y < ry || y > ry + h) {
+              continue;
+            }
+            current_click = 'Rect ' + i;
+            if (selected[i]) {
+              rects[i].attr('stroke', null);
+              selected[i] = false;
+            } else {
+              rects[i].stroke({ color: '#f06', opacity: 0.6, width: 3 });
+              selected[i] = true;
+            }
+            found = true;
+            break;
+          }
+          if (!found) current_click = 'nothing';
+          update(event.pageX, event.pageY);
+        } 
+      })
     });
     </script>
   </body>

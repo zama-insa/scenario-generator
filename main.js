@@ -1,6 +1,5 @@
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
-var $ = require('jquery');
 // Report crashes to our server.
 require('crash-reporter').start();
 
